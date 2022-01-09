@@ -9,12 +9,15 @@ def main():
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
     im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     im3 = np.copy(img)
-    cv.drawContours(im3, contours, -1, (0, 255, 0), 3)
-    plt.subplot(121), plt.imshow(img, cmap='gray')
-    plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(122), plt.imshow(im3, cmap='gray')
-    plt.title('Contours'), plt.xticks([]), plt.yticks([])
-    plt.show()
+    for idx, cont in enumerate(contours):
+        cv.drawContours(im3, contours, idx, (0, 255, 0), 3)
+        print(idx)
+        plt.subplot(121), plt.imshow(img, cmap='gray')
+        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+        plt.subplot(122), plt.imshow(im3, cmap='gray')
+        plt.title('Contours'), plt.xticks([]), plt.yticks([])
+        plt.show()
+        im3 = np.copy(img)
 
 
 if __name__ == "__main__":

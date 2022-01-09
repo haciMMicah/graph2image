@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import cv2 as cv
 import graph as gr
@@ -202,9 +203,15 @@ if __name__ == "__main__":
     graph.read_file(fname, delim=';')
     indices = sort_nodes(graph)
     circles = generate_circles(graph, indices)
+    img = cv.imread('../resources/witcherMedallion.jpg')
+    imgray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    ret, thresh = cv.threshold(imgray, 127, 255, 0)
+    im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     polygon = np.array([[0, 0], [0, 400], [400, 400], [400, 0]], dtype='int')
-    new_img, unused = pack_polygon(polygon, circles, max_attempts=20)
-    print(unused)
+    contour = 18
+    #polygon = contours[contour].reshape((contours[contour].shape[0], contours[contour].shape[2]))
+    print(polygon.shape)
+    new_img, unused = pack_polygon(polygon, circles, max_attempts=50, img_width=800, img_height=800)
     plt.subplot(121), plt.imshow(new_img, cmap='gray')
     plt.title('circles'), plt.xticks([]), plt.yticks([])
     plt.show()
