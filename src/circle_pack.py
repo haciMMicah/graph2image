@@ -18,106 +18,15 @@ def generate_circles(graph_obj, indices, width=800, height=600):
     return circle_attr
 
 
-# Given 3 collinear points, checks if point q lies on segment pr. Derived from
-# https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
-def on_segment(p, q, r):
-    q_x = q[1]
-    q_y = q[0]
-    p_x = p[1]
-    p_y = p[0]
-    r_x = r[1]
-    r_y = r[0]
-    if max(p_x, r_x) >= q_x >= min(p_x, r_x) and max(p_y, r_y) >= q_y >= min(p_y, r_y):
-        return True
-    else:
-        return False
-
-
-# Given point triplet (p, q, r) use cross product to find orientation of the triplet
-# derived from https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
-# 0 -> p, q, and r are collinear
-# 1 -> clockwise
-# 2 -> couter clockwise
-def orientation(p, q, r):
-    q_x = q[1]
-    q_y = q[0]
-    p_x = p[1]
-    p_y = p[0]
-    r_x = r[1]
-    r_y = r[0]
-    val = (q_y - p_y) * (r_x - q_x) - (q_x - p_x) * (r_y - q_y)
-    if val == 0:
-        return 0
-    elif val > 0:
-        return 1
-    else:
-        return 2
-
-# Returns true if line segment p1q1 and p2q2 intersect
-# derived from https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
-def do_intersect(p1, q1, p2, q2):
-    o1 = orientation(p1, q1, p2)
-    o2 = orientation(p1, q1, q2)
-    o3 = orientation(p2, q2, p1)
-    o4 = orientation(p2, q2, q1)
-
-    # General case
-    if o1 != o2 and o3 != o4:
-        return True
-
-    # Special cases
-    # p1, q1, and p2 are collinear and p2 lies on segment p1q1
-    if o1 == 0 and on_segment(p1, p2, q1):
-        return True
-
-    # p1, q1, and p2 are collinear and q1 lies on segment p1q1
-    if o2 == 0 and on_segment(p1, q2, q1):
-        return True
-
-    # p2, q2, and p1 are collinear and p1 lies on segment p2q2
-    if o3 == 0 and on_segment(p2, p1, q2):
-        return True
-
-    # p2, q2, and q1 are collinear and q1 lies on segment p2q2
-    if o4 == 0 and on_segment(p2, q1, q2):
-        return True
-
-    return False
-
-
 # Returns true if the point p lies inside the polygon (ndarray)
-# derived from https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
-def point_inside_polygon(polygon, p):
-    n = polygon.shape[0]
+# Checks if point lies in a thresholded area
+def point_inside_polygon(polygon, p, thresh_val=0):
     p_x = p[1]
     p_y = p[0]
-
-    # Polygon must have at least 3 vertices
-    if n < 3:
-        return False
-
-    # create some large value to be our infinite value TODO: (revisit this later)
-    inf = 500000
-
-    # Create a point for line segment from p to inf
-    line = np.array([p_y, inf])
-
-    count = 0
-    i = 0
-    is_done = False
-    # count intersection of the above line with sides of the polygon
-    while not is_done:
-        next = (i + 1) % n
-        # Check if the line segment from p to line intersects with the line segment from polygon[i] to polygon[next]
-        if do_intersect(polygon[i, :], polygon[next, :], p, line):
-            # If the point p is collinear with line segment i->next, then check if it lies on segment.
-            # if it lies, return true, otherwise false
-            if orientation(polygon[i], p, polygon[next]) == 0:
-                return on_segment(polygon[i], p, polygon[next])
-            count += 1
-        i = next
-        is_done = i == 0
-    return count % 2 == 1
+    if 0 <= p_x < polygon.shape[1] and 0 <= p_y < polygon.shape[0]:
+        if polygon[p_y, p_x] <= thresh_val:
+            return True
+    return False
 
 # Returns true if two given circles intersect
 def circles_collide(circle1, circle2):
@@ -132,7 +41,7 @@ def circles_collide(circle1, circle2):
     return dist <= c1_r + c2_r
 
 
-def draw_circles(circles, polygon=None, img_width=800, img_height=600):
+def draw_circles(circles, img_width=800, img_height=600):
     img = np.zeros((img_height, img_width, 3), dtype='uint8')
     colors = np.random.randint([0, 0, 0], high=[255, 255, 255], size=(circles.shape[0], 3))
     for idx, row in enumerate(circles[:]):
@@ -141,18 +50,17 @@ def draw_circles(circles, polygon=None, img_width=800, img_height=600):
         center = (circles[idx, 1], circles[idx, 0])
         radius = int(circles[idx, 2])
         img = cv.circle(img, center, radius, color, thickness)
-        if polygon is not None:
-            img = cv.polylines(img, [polygon], True, (255, 255, 255))
     return img
+
 
 # Returns an image matrix with the circles drawn to fill a polygon
 # also returns the unused circles. Randomly places circles in polygon
-# until they don't overlap. derived from https://tylerxhobbs.com/essays/2016/a-randomized-approach-to-cicle-packing
+# until they don't overlap. Derived from https://tylerxhobbs.com/essays/2016/a-randomized-approach-to-cicle-packing
 def pack_polygon(polygon, circles, img_width=800, img_height=600, max_attempts=2000, radius_min=3, radius_max=40):
     unused = []
     used = []
-    poly_max = polygon.max(axis=0)
-    poly_min = polygon.min(axis=0)
+    poly_max = polygon.shape
+    poly_min = np.array([0, 0])
     for idx, circ in enumerate(circles[:]):
         placed_circle = False
         circ[2] = int(circ[2] * .4)
@@ -193,7 +101,7 @@ def pack_polygon(polygon, circles, img_width=800, img_height=600, max_attempts=2
 
     # Draw the circles
     used = np.array(used)
-    img = draw_circles(used, polygon, img_width, img_height)
+    img = draw_circles(used, img_width, img_height)
     return img, unused
 
 
@@ -207,11 +115,9 @@ if __name__ == "__main__":
     imgray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
     im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    polygon = np.array([[0, 0], [0, 400], [400, 400], [400, 0]], dtype='int')
-    contour = 18
-    #polygon = contours[contour].reshape((contours[contour].shape[0], contours[contour].shape[2]))
-    print(polygon.shape)
-    new_img, unused = pack_polygon(polygon, circles, max_attempts=50, img_width=800, img_height=800)
+    polygon = thresh
+    new_img, unused = pack_polygon(polygon, circles, max_attempts=1000, img_width=1000,
+                                   img_height=1000, radius_min=3, radius_max=50)
     plt.subplot(121), plt.imshow(new_img, cmap='gray')
     plt.title('circles'), plt.xticks([]), plt.yticks([])
     plt.show()
