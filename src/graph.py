@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import networkx as nx
 
 
 class Graph:
@@ -10,6 +11,7 @@ class Graph:
         self.nodeNames = []
         self.nodeInDegrees = np.array([], dtype=int, ndmin=1)
         self.nodeOutDegrees = np.array([], dtype=int, ndmin=1)
+        self.colors = None
 
     def read_file(self, filename='', delim=','):
         with open(filename, 'r') as csvfile:
@@ -29,6 +31,13 @@ class Graph:
             self.nodeInDegrees = np.count_nonzero(self.adjMatrix, axis=1)
             # Out degrees are non-zero occurrences across the rows
             self.nodeOutDegrees = np.count_nonzero(self.adjMatrix, axis=0)
+
+    def read_colors(self, filename):
+        self.colors = {}
+        g = nx.read_graphml(filename)
+        for node, data in g.nodes(data=True):
+            if "color" in data:
+                self.colors[node] = (int(data['r']), int(data['g']), int(data['b']))
 
 
 if __name__ == "__main__":

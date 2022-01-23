@@ -13,8 +13,9 @@ def sort_nodes(graph_obj):
 
 
 def generate_circles(graph_obj, indices, width=800, height=600):
-    circle_attr = np.random.randint([0, 0, 0], high=[height, width, 1], size=(indices.shape[0], 3))
+    circle_attr = np.random.randint([0, 0, 0, 0], high=[height, width, 1, 1], size=(indices.shape[0], 4))
     circle_attr[:, 2] = graph_obj.nodeOutDegrees[indices]
+    circle_attr[:, 3] = np.arange(indices.shape[0])
     return circle_attr
 
 
@@ -27,6 +28,7 @@ def point_inside_polygon(polygon, p, thresh_val=0):
         if polygon[p_y, p_x] <= thresh_val:
             return True
     return False
+
 
 # Returns true if two given circles intersect
 def circles_collide(circle1, circle2):
@@ -41,11 +43,12 @@ def circles_collide(circle1, circle2):
     return dist <= c1_r + c2_r
 
 
-def draw_circles(circles, img_width=800, img_height=600):
+def draw_circles(circles, names, colors, img_width=800, img_height=600):
     img = np.zeros((img_height, img_width, 3), dtype='uint8')
-    colors = np.random.randint([0, 0, 0], high=[255, 255, 255], size=(circles.shape[0], 3))
     for idx, row in enumerate(circles[:]):
-        color = (int(colors[idx, 0]), int(colors[idx, 1]), int(colors[idx, 2]))
+        index = circles[idx, 3]
+        name = names[index]
+        color = colors[name]
         thickness = -1
         center = (circles[idx, 1], circles[idx, 0])
         radius = int(circles[idx, 2])
@@ -56,9 +59,11 @@ def draw_circles(circles, img_width=800, img_height=600):
 # Returns an image matrix with the circles drawn to fill a polygon
 # also returns the unused circles. Randomly places circles in polygon
 # until they don't overlap. Derived from https://tylerxhobbs.com/essays/2016/a-randomized-approach-to-cicle-packing
-def pack_polygon(polygon, circles, img_width=800, img_height=600, max_attempts=2000, radius_min=3, radius_max=40):
+def pack_polygon(polygon, circles, names, colors, img_width=800, img_height=600, max_attempts=2000, radius_min=3, radius_max=40):
     unused = []
+    unusedIndices = []
     used = []
+    usedIndices = []
     poly_max = polygon.shape
     poly_min = np.array([0, 0])
     for idx, circ in enumerate(circles[:]):
@@ -92,32 +97,37 @@ def pack_polygon(polygon, circles, img_width=800, img_height=600, max_attempts=2
                         break
                 if not any_collisions:
                     used.append(circ)
+                    usedIndices.append(idx)
                     placed_circle = True
-                    print("Placed circle {} at idx {}".format(circ, idx))
+                    print("Placed node {}, {}, {}".format(names[idx], circ, colors[names[idx]]))
                     break
         if not placed_circle:
             unused.append(circ)
-            print("Did not place circle {} at idx {}".format(circ, idx))
+            unusedIndices.append(idx)
+            print("Did not place node {}, {}".format(names[idx], circ))
 
     # Draw the circles
     used = np.array(used)
-    img = draw_circles(used, img_width, img_height)
-    return img, unused
+    img = draw_circles(used, names, colors, img_width, img_height)
+    return img, used, unused, usedIndices, unusedIndices
 
 
 if __name__ == "__main__":
     fname = '../resources/WitcherNetwork.csv'
     graph = gr.Graph()
     graph.read_file(fname, delim=';')
+    graph.read_colors("../resources/WitcherNetwork.graphml")
+    colors = graph.colors
     indices = sort_nodes(graph)
+    names = np.array(graph.nodeNames)[indices]
     circles = generate_circles(graph, indices)
     img = cv.imread('../resources/witcherMedallion.jpg')
+    img = cv2.resize(img, (1000, 1000), interpolation=cv2.INTER_CUBIC)
     imgray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
-    im2, contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     polygon = thresh
-    new_img, unused = pack_polygon(polygon, circles, max_attempts=1000, img_width=1000,
-                                   img_height=1000, radius_min=3, radius_max=50)
+    new_img, used, unused, usedIdx, unusedIdx = pack_polygon(polygon, circles, names, colors, max_attempts=500, img_width=1000,
+                                                             img_height=1000, radius_min=5, radius_max=100)
     plt.subplot(121), plt.imshow(new_img, cmap='gray')
     plt.title('circles'), plt.xticks([]), plt.yticks([])
     plt.show()
