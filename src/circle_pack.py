@@ -3,6 +3,10 @@ import cv2 as cv
 import graph as gr
 from matplotlib import pyplot as plt
 
+CIRCLE_Y = 0  # Circle attribute Y index
+CIRCLE_X = 1  # Circle attribute X index
+CIRCLE_R = 2  # Circle attribute R (Radius) index
+CIRCLE_I = 3  # Circle attribute index in adj matrix
 
 def sort_nodes(graph_obj):
     """
@@ -62,12 +66,12 @@ def circles_collide(circle1, circle2):
     :param circle2: ndarray, 1x4
     :return: True if the circles intersect, False otherwise
     """
-    c1_x = circle1[1]
-    c1_y = circle1[0]
-    c1_r = circle1[2]
-    c2_x = circle2[1]
-    c2_y = circle2[0]
-    c2_r = circle2[2]
+    c1_x = circle1[CIRCLE_X]
+    c1_y = circle1[CIRCLE_Y]
+    c1_r = circle1[CIRCLE_R]
+    c2_x = circle2[CIRCLE_X]
+    c2_y = circle2[CIRCLE_Y]
+    c2_r = circle2[CIRCLE_R]
 
     dist = np.sqrt((c2_x - c1_x)**2 + (c2_y - c1_y)**2)
     return dist <= c1_r + c2_r
@@ -85,12 +89,12 @@ def draw_circles(circles, names, colors, img_width=800, img_height=600):
     """
     img = np.zeros((img_height, img_width, 3), dtype='uint8')
     for idx, row in enumerate(circles[:]):
-        index = circles[idx, 3]
+        index = circles[idx, CIRCLE_I]
         name = names[index]
         color = colors[name]
         thickness = -1
-        center = (circles[idx, 1], circles[idx, 0])
-        radius = int(circles[idx, 2])
+        center = (circles[idx, CIRCLE_X], circles[idx, CIRCLE_Y])
+        radius = int(circles[idx, CIRCLE_R])
         img = cv.circle(img, center, radius, color, thickness)
     return img
 
@@ -123,21 +127,21 @@ def pack_polygon(polygon, circles, names, colors, img_width=800, img_height=600,
     poly_min = np.array([0, 0])
     for idx, circ in enumerate(circles[:]):
         placed_circle = False
-        circ[2] = int(circ[2] * .4)
-        if circ[2] < radius_min:
-            circ[2] = radius_min
-        if circ[2] > radius_max:
-            circ[2] = radius_max
+        circ[CIRCLE_R] = int(circ[CIRCLE_R] * .4)
+        if circ[CIRCLE_R] < radius_min:
+            circ[CIRCLE_R] = radius_min
+        if circ[CIRCLE_R] > radius_max:
+            circ[CIRCLE_R] = radius_max
         for tries in range(max_attempts):
             # randomly place the polygon
-            circ[1] = np.random.randint(poly_min[1], poly_max[1])
-            circ[0] = np.random.randint(poly_min[0], poly_max[0])
+            circ[CIRCLE_X] = np.random.randint(poly_min[1], poly_max[1])
+            circ[CIRCLE_Y] = np.random.randint(poly_min[0], poly_max[0])
             # Check if the circle lies within polygon by going over 8 points around circle and checking each point
             is_inside = True
             for k in range(8):
                 theta = np.pi * (k / 4.0)
-                point_x = circ[1] + int(circ[2] * np.cos(theta))
-                point_y = circ[0] + int(circ[2] * np.sin(theta))
+                point_x = circ[CIRCLE_X] + int(circ[CIRCLE_R] * np.cos(theta))
+                point_y = circ[CIRCLE_Y] + int(circ[CIRCLE_R] * np.sin(theta))
                 if point_inside_polygon(polygon, np.array([point_y, point_x])):
                     pass
                 else:
