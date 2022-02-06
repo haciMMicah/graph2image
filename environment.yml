@@ -58,6 +58,7 @@ dependencies:
   - mkl_random=1.2.2=py37h51133e4_0
   - munkres=1.1.4=py_0
   - ncurses=6.3=h7f8727e_2
+  - networkx=2.6.3=pyhd3eb1b0_0
   - numpy=1.21.2=py37h20f2e39_0
   - numpy-base=1.21.2=py37h79a1101_0
   - olefile=0.46=py37_0
