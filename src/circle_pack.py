@@ -6,6 +6,14 @@ from matplotlib import pyplot as plt
 
 
 def sort_nodes(graph_obj):
+    """
+    sort_nodes returns a permutation array that corresponds to the
+    indices of a graph's nodes sorted in descending order based on
+    the outdegree of the nodes.
+
+    :param graph_obj: Graph Object
+    :return: Indices as a ndarray
+    """
     # Sort the indices
     ind = np.argsort(graph_obj.nodeOutDegrees)
     ind = np.flip(ind)
@@ -13,15 +21,32 @@ def sort_nodes(graph_obj):
 
 
 def generate_circles(graph_obj, indices, width=800, height=600):
+    """
+    Generates circles with random x,y coordinatesthat correspond to a graph object's nodes
+
+    :param graph_obj: A Graph object
+    :param indices: The indices of the nodes (should be in descended sorted order by outdegree)
+    :param width: Width of image frame to generate the circles on
+    :param height: Height of image fram to generate the circles on
+    :return: ndarray that represents cirlce attributes [height, width, size, index] Nx4 where N = num circles
+    """
     circle_attr = np.random.randint([0, 0, 0, 0], high=[height, width, 1, 1], size=(indices.shape[0], 4))
     circle_attr[:, 2] = graph_obj.nodeOutDegrees[indices]
     circle_attr[:, 3] = np.arange(indices.shape[0])
     return circle_attr
 
 
-# Returns true if the point p lies inside the polygon (ndarray)
-# Checks if point lies in a thresholded area
 def point_inside_polygon(polygon, p, thresh_val=0):
+    """
+    Returns true if the point p lies inside the polygon (ndarray)
+    Checks if point lies in a thresholded area
+
+    :param polygon: ndarray that represents the thresholded image contour that we want to circle pack
+    :param p: ndarray 1x2 representing a point in Euclidean N^2 space.
+    :param thresh_val: The threshold value that we want to represent inclusion. i.e. if point (x, y)
+           in the polygon is <= thresh_val then the point is in the polygon
+    :return: True if point p in inside the polygon, False otherwise
+    """
     p_x = p[1]
     p_y = p[0]
     if 0 <= p_x < polygon.shape[1] and 0 <= p_y < polygon.shape[0]:
@@ -30,8 +55,14 @@ def point_inside_polygon(polygon, p, thresh_val=0):
     return False
 
 
-# Returns true if two given circles intersect
 def circles_collide(circle1, circle2):
+    """
+    Returns True if  two given circles intersect
+
+    :param circle1: ndarray, 1x4
+    :param circle2: ndarray, 1x4
+    :return: True if the circles intersect, False otherwise
+    """
     c1_x = circle1[1]
     c1_y = circle1[0]
     c1_r = circle1[2]
@@ -44,6 +75,15 @@ def circles_collide(circle1, circle2):
 
 
 def draw_circles(circles, names, colors, img_width=800, img_height=600):
+    """
+    Creates an image with a passed in array of circles drawn on it given label and color info
+    :param circles: ndarray, Nx4 circle attributes
+    :param names: Node labels to index int the color dictionary
+    :param colors: Dictionary of node labels to color information
+    :param img_width: int image height defaults to 800
+    :param img_height: int image width defaults to 600
+    :return: ndarray img_width X img_height sized Image with the drawn circles
+    """
     img = np.zeros((img_height, img_width, 3), dtype='uint8')
     for idx, row in enumerate(circles[:]):
         index = circles[idx, 3]
@@ -56,10 +96,26 @@ def draw_circles(circles, names, colors, img_width=800, img_height=600):
     return img
 
 
-# Returns an image matrix with the circles drawn to fill a polygon
-# also returns the unused circles. Randomly places circles in polygon
-# until they don't overlap. Derived from https://tylerxhobbs.com/essays/2016/a-randomized-approach-to-cicle-packing
-def pack_polygon(polygon, circles, names, colors, img_width=800, img_height=600, max_attempts=2000, radius_min=3, radius_max=40):
+def pack_polygon(polygon, circles, names, colors, img_width=800, img_height=600, max_attempts=2000, radius_min=3,
+                 radius_max=40, verbose=False):
+    """
+    Returns an image matrix with the circles drawn to fill a polygon
+    also returns the used/unused circles and used/unused indices of original circles array.
+    Randomly places circles in polygon until they don't overlap.
+    Derived from https://tylerxhobbs.com/essays/2016/a-randomized-approach-to-cicle-packing
+
+    :param polygon: ndarray of binary thresholded contour image that we want to circle pack
+    :param circles: ndarray of Nx4 circle attributes [height, width, size, index]
+    :param names: ndarray of node labels
+    :param colors: Dictionary of node labels to color information
+    :param img_width: int width of the return image default 800
+    :param img_height: int height of the return image default 600
+    :param max_attempts: int maximum number of attempts to place a circle default 2000
+    :param radius_min: int minimum radius of a circle to draw default 3, clips radius to min
+    :param radius_max: int max radius of a circle to draw default 40, clips radius to max
+    :param verbose: bool to print output or not default False
+    :return: ndarray img, ndarray used circles, ndarray unused circles, ndarray usedIndices, ndarray unusedIndices
+    """
     unused = []
     unusedIndices = []
     used = []
@@ -99,12 +155,14 @@ def pack_polygon(polygon, circles, names, colors, img_width=800, img_height=600,
                     used.append(circ)
                     usedIndices.append(idx)
                     placed_circle = True
-                    print("Placed node {}, {}, {}".format(names[idx], circ, colors[names[idx]]))
+                    if verbose:
+                        print("Placed node {}, Attributes: {}, Color: {}".format(names[idx], circ, colors[names[idx]]))
                     break
         if not placed_circle:
             unused.append(circ)
             unusedIndices.append(idx)
-            print("Did not place node {}, {}".format(names[idx], circ))
+            if verbose:
+                print("Did not place node {}, Attributes: {}".format(names[idx], circ))
 
     # Draw the circles
     used = np.array(used)
@@ -127,7 +185,7 @@ if __name__ == "__main__":
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
     polygon = thresh
     new_img, used, unused, usedIdx, unusedIdx = pack_polygon(polygon, circles, names, colors, max_attempts=500, img_width=1000,
-                                                             img_height=1000, radius_min=5, radius_max=100)
+                                                             img_height=1000, radius_min=5, radius_max=100, verbose=True)
     plt.subplot(121), plt.imshow(new_img, cmap='gray')
     plt.title('circles'), plt.xticks([]), plt.yticks([])
     plt.show()
