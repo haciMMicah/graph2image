@@ -1,4 +1,3 @@
-import cv2
 import numpy as np
 import cv2 as cv
 import graph as gr
@@ -180,7 +179,7 @@ if __name__ == "__main__":
     names = np.array(graph.nodeNames)[indices]
     circles = generate_circles(graph, indices)
     img = cv.imread('../resources/witcherMedallion.jpg')
-    img = cv2.resize(img, (1000, 1000), interpolation=cv2.INTER_CUBIC)
+    img = cv.resize(img, (1000, 1000), interpolation=cv.INTER_CUBIC)
     imgray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
     polygon = thresh
