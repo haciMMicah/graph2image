@@ -20,6 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--max_attempts", type=int, default=2000,
                         help="maximum number of attempt to pack a circle")
     parser.add_argument("-v", "--verbose", action="store_const", const=True, default=False, help="verbosity")
+    parser.add_argument("-s", "--save_file", type=str, default="", help="save file location")
     args = parser.parse_args()
 
     fname = args.csv_file
@@ -35,11 +36,17 @@ if __name__ == "__main__":
     imgray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
     polygon = thresh
+    save_file = args.save_file
     new_img, used, unused, usedIdx, unusedIdx = cp.pack_polygon(polygon, circles, names, colors,
                                                                 max_attempts=args.max_attempts, img_width=args.width,
                                                                 img_height=args.height, radius_min=args.radius_min,
                                                                 radius_max=args.radius_max,
                                                                 verbose=args.verbose)
-    plt.subplot(121), plt.imshow(new_img, cmap='gray')
+    figure = plt.figure(figsize=(args.width/100, args.height/100))
+    ax = figure.add_axes([0, 0, 1, 1])
+    ax.axis('off')
+    plt.imshow(new_img, cmap='gray')
     plt.title('circles'), plt.xticks([]), plt.yticks([])
+    if save_file != "":
+        plt.savefig(save_file)
     plt.show()
