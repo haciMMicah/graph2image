@@ -68,6 +68,6 @@ if __name__ == "__main__":
             for j, col in enumerate(row[indices]):
                 if col > 0:
                     G.add_edge(names[i], names[j], weight=col)
-        nx.write_graphml(G, "./got.graphml", named_key_ids=True)
+        nx.write_graphml(G, graphml_file, named_key_ids=True)
 
     plt.show()
