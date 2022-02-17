@@ -1,9 +1,12 @@
+import math
+
 import numpy as np
 import cv2 as cv
 import graph as gr
 import circle_pack as cp
 from matplotlib import pyplot as plt
 import argparse
+import networkx as nx
 
 
 if __name__ == "__main__":
@@ -21,6 +24,7 @@ if __name__ == "__main__":
                         help="maximum number of attempt to pack a circle")
     parser.add_argument("-v", "--verbose", action="store_const", const=True, default=False, help="verbosity")
     parser.add_argument("-s", "--save_file", type=str, default="", help="save file location")
+    parser.add_argument("-o", "--output_graphml_file", type=str, default="", help="save file for graphml file")
     args = parser.parse_args()
 
     fname = args.csv_file
@@ -37,6 +41,7 @@ if __name__ == "__main__":
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
     polygon = thresh
     save_file = args.save_file
+    graphml_file = args.output_graphml_file
     new_img, used, unused, usedIdx, unusedIdx = cp.pack_polygon(polygon, circles, names, colors,
                                                                 max_attempts=args.max_attempts, img_width=args.width,
                                                                 img_height=args.height, radius_min=args.radius_min,
@@ -47,6 +52,22 @@ if __name__ == "__main__":
     ax.axis('off')
     plt.imshow(new_img, cmap='gray')
     plt.title('circles'), plt.xticks([]), plt.yticks([])
+
+    # Output image file if specified
     if save_file != "":
         plt.savefig(save_file)
+
+    # Output graphml file if specified
+    if graphml_file != "":
+        G = nx.Graph()
+        for _, circ in enumerate(used):
+            G.add_node(names[circ[cp.CIRCLE_I]], x=float(circ[cp.CIRCLE_X]), y=float(args.height - circ[cp.CIRCLE_Y]),
+                       r=int(colors[names[circ[cp.CIRCLE_I]]][0]), g=int(colors[names[circ[cp.CIRCLE_I]]][1]),
+                       b=int(colors[names[circ[cp.CIRCLE_I]]][2]), size=float(circ[cp.CIRCLE_R]))
+        for i, row in enumerate(graph.adjMatrix[indices]):
+            for j, col in enumerate(row[indices]):
+                if col > 0:
+                    G.add_edge(names[i], names[j], weight=col)
+        nx.write_graphml(G, "./got.graphml", named_key_ids=True)
+
     plt.show()

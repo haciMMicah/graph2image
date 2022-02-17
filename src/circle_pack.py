@@ -8,6 +8,7 @@ CIRCLE_X = 1  # Circle attribute X index
 CIRCLE_R = 2  # Circle attribute R (Radius) index
 CIRCLE_I = 3  # Circle attribute index in adj matrix
 
+
 def sort_nodes(graph_obj):
     """
     sort_nodes returns a permutation array that corresponds to the
@@ -34,8 +35,8 @@ def generate_circles(graph_obj, indices, width=800, height=600):
     :return: ndarray that represents cirlce attributes [height, width, size, index] Nx4 where N = num circles
     """
     circle_attr = np.random.randint([0, 0, 0, 0], high=[height, width, 1, 1], size=(indices.shape[0], 4))
-    circle_attr[:, 2] = graph_obj.nodeOutDegrees[indices]
-    circle_attr[:, 3] = np.arange(indices.shape[0])
+    circle_attr[:, CIRCLE_R] = graph_obj.nodeOutDegrees[indices]
+    circle_attr[:, CIRCLE_I] = np.arange(indices.shape[0])
     return circle_attr
 
 
@@ -187,8 +188,9 @@ if __name__ == "__main__":
     imgray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     ret, thresh = cv.threshold(imgray, 127, 255, 0)
     polygon = thresh
-    new_img, used, unused, usedIdx, unusedIdx = pack_polygon(polygon, circles, names, colors, max_attempts=500, img_width=1000,
-                                                             img_height=1000, radius_min=5, radius_max=100, verbose=True)
+    new_img, used, unused, usedIdx, unusedIdx = pack_polygon(polygon, circles, names, colors, max_attempts=500,
+                                                             img_width=1000,img_height=1000, radius_min=5,
+                                                             radius_max=100, verbose=True)
     plt.subplot(121), plt.imshow(new_img, cmap='gray')
     plt.title('circles'), plt.xticks([]), plt.yticks([])
     plt.show()
