@@ -16,7 +16,9 @@ Running the graph2image script on the graphml file produced from this network wi
 ```
 python graph2image.py "../resources/WitcherNetwork.csv" "../resources/WitcherNetwork.graphml" "..resources/witcherMedallion.jpg" -H 1000 -w 1000 -R 100 -r 5 -a 2000 -o "./witcherPacked.graphml"
 ```
-then gives us a new graphml file with the graph's nodes arranged to be packed into the contour image.
+then gives us a new graphml file with the graph's nodes arranged to be packed into the contour image. The script takes a csv file 
+representing an adjacency matrix of the graph (the csv output from a Gelphi file), a graphml representation of a graph (graphml output of a Gelphi file),
+and an image file that represents the contour to be packed.
 
 We can now import this graphml file into a graph visualization tool like Gelphi and get a visualization of this graph.
 Below is without the edges of the graph displayed.
