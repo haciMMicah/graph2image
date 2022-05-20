@@ -4,10 +4,12 @@ A python tool to pack the contour of an image with the nodes of a network graph.
 ## Example
 This social network for the character interactions in the Witcher novels was created by [Milán Janosov](https://github.com/milanjanosov). 
 You can check out his work in his article [A Network Map of The Witcher](https://nightingaledvs.com/a-network-map-of-the-witcher/).
+
 ![Witcher Network](https://github.com/haciMMicah/graph2image/blob/main/resources/WitcherNetwork.png)
 
 Lets say we would like the nodes of this network to be rearanged to fit within the contours of an image. 
 The below image is a binary contour image of some different symbols from the Netflix Witcher adaptation.
+
 ![Netflix Witcher Symbols](https://github.com/haciMMicah/graph2image/blob/main/resources/witcherMedallion.jpg)
 
 Running the graph2image script on the graphml file produced from this network with this command
@@ -18,12 +20,15 @@ then gives us a new graphml file with the graph's nodes arranged to be packed in
 
 We can now import this graphml file into a graph visualization tool like Gelphi and get a visualization of this graph.
 Below is without the edges of the graph displayed.
+
 ![Witcher Packed No Edges](https://github.com/haciMMicah/graph2image/blob/main/resources/WitcherPackedNoEdges.PNG)
 
 And here it is with the edges displayed.
+
 ![Witcher Packed With Edges](https://github.com/haciMMicah/graph2image/blob/main/resources/WitcherPackedWithEdges.PNG)
 
-This new graph doesn't tell us much in terms of node interaction. But can be used as a nice visualization tool to attract a reader's attention.
+This new graph doesn't tell us much in terms of node interaction. But can be used as a nice visualization tool to attract a reader's attention. 
+Note: the node sizes of the new graph were increased in order to more adequately fill the negative space. This is a tunable parameter in the script with the -R and -r flags.
 
 
 ## How it works
